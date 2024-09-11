@@ -1,0 +1,40 @@
+name: Deploy to Google Cloud Functions
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Step 1: Authenticate using google-github-actions/auth
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+    # Step 2: Set up Cloud SDK (without cloud-functions component installation)
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    # Step 3: Deploy to Google Cloud Functions
+    - name: Deploy to Google Cloud Functions
+      run: |
+        gcloud functions deploy function-1 \
+          --region=europe-west6 \
+          --runtime=nodejs20 \
+          --trigger-http \
+          --allow-unauthenticated \
+          --set-env-vars "RATE_LIMIT_TTL=60,MONGODB_URL=${{ secrets.MONGODB_URL }},REDIS_HOST=${{ secrets.REDIS_HOST }},REDIS_PORT=6379,CACHE_TTL=1800000,RATE_LIMIT_TTL=80000,RATE_LIMIT=100"
+
